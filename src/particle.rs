@@ -18,27 +18,31 @@ impl ParticleSet {
         self.particles.push(Particle::new(x, y));
     }
     pub fn draw(&mut self, c: Context, g: &mut GlGraphics) {
+        self.settled.iter().for_each(|p| {
+            p.draw(c, g);
+        });
         self.particles.iter().for_each(|p| {
             p.draw(c, g);
         });
     }
     pub fn update(&mut self) {
-        let settled: Vec<Particle> = self
-            .particles
-            .iter()
-            .filter(|p| p.settled)
-            .copied()
-            .collect();
-        if settled.len() == self.particles.len() {
+        if self.particles.is_empty() {
             thread::sleep(Duration::from_millis(100));
         } else {
-            let heights = get_max_heights(&settled);
+            let heights = get_max_heights(&self.settled);
+            let mut particles_to_remove = Vec::<Particle>::new();
             self.particles
                 .iter_mut()
                 .filter(|p| !p.settled)
                 .for_each(|p| {
                     p.update(&heights);
+                    if p.settled {
+                        particles_to_remove.push(*p);
+                        self.settled.push(*p);
+                    }
                 });
+
+            self.particles.retain(|p| !particles_to_remove.contains(p));
         }
     }
 }
@@ -52,7 +56,7 @@ fn random_color() -> types::Color {
     [r, g, b, 1.0]
 }
 
-#[derive(Clone, Copy, Debug)]
+#[derive(Clone, Copy, Debug, PartialEq)]
 pub struct Particle {
     pub x: u32,
     pub y: u32,
