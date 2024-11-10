@@ -25,6 +25,7 @@ fn main() {
         }
         if let Some(Button::Keyboard(key)) = e.press_args() {
             println!("Pressed keyboard key '{:?}'", key);
+            app.report();
         };
         if let Some(mousepos) = e.mouse_cursor_args() {
             app.update_mouse_pos(mousepos);

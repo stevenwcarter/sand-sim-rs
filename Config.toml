@@ -7,3 +7,4 @@ damping_wall = 0.1
 damping_ball = 0.2
 air_resistance = 0.001
 collision_tolerance = 0.005
+particle_rate = 40

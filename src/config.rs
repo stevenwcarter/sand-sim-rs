@@ -27,6 +27,8 @@ pub struct Config {
     pub air_resistance: f64,
     #[serde(default)]
     pub collision_tolerance: f64,
+    #[serde(default)]
+    pub particle_rate: u32,
 }
 
 lazy_static! {

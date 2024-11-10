@@ -1,4 +1,4 @@
-use std::{ops::Sub, thread, time::Duration};
+use std::{thread, time::Duration};
 
 use hashbrown::HashMap;
 use opengl_graphics::GlGraphics;
@@ -9,8 +9,9 @@ use crate::config::CONFIG;
 
 #[derive(Default)]
 pub struct ParticleSet {
-    particles: Vec<Particle>,
-    settled: Vec<Particle>,
+    pub particles: Vec<Particle>,
+    pub settled: Vec<Particle>,
+    pub peaks: HashMap<u32, u32>,
 }
 
 impl ParticleSet {
@@ -18,6 +19,19 @@ impl ParticleSet {
         self.particles.push(Particle::new(x, y));
     }
     pub fn draw(&mut self, c: Context, g: &mut GlGraphics) {
+        self.peaks.iter().for_each(|(x, y)| {
+            rectangle(
+                [0.5, 0.5, 0.5, 1.0],
+                [
+                    *x as f64,
+                    ((CONFIG.height + *y) as f64 / 2.0),
+                    1.0,
+                    (CONFIG.height - *y) as f64,
+                ],
+                c.transform,
+                g,
+            );
+        });
         self.settled.iter().for_each(|p| {
             p.draw(c, g);
         });
@@ -29,7 +43,7 @@ impl ParticleSet {
         if self.particles.is_empty() {
             thread::sleep(Duration::from_millis(100));
         } else {
-            let heights = get_max_heights(&self.settled);
+            let heights = self.peaks.clone();
             let mut particles_to_remove = Vec::<Particle>::new();
             self.particles
                 .iter_mut()
@@ -41,6 +55,8 @@ impl ParticleSet {
                         self.settled.push(*p);
                     }
                 });
+
+            self.peaks = get_max_heights(Some(self.peaks.clone()), &self.settled);
 
             self.particles.retain(|p| !particles_to_remove.contains(p));
         }
@@ -103,9 +119,9 @@ impl Particle {
         self.x = new_x as u32;
         self.y = new_y as u32;
 
-        let this_col_height = *heights.get(&self.x).unwrap();
-        let left_col_height = *heights.get(&(self.x - 1)).unwrap();
-        let right_col_height = *heights.get(&(self.x + 1)).unwrap();
+        let this_col_height = *heights.get(&self.x).unwrap_or(&CONFIG.height);
+        let left_col_height = *heights.get(&(self.x - 1)).unwrap_or(&CONFIG.height);
+        let right_col_height = *heights.get(&(self.x + 1)).unwrap_or(&CONFIG.height);
 
         if self.y > this_col_height {
             self.y = this_col_height - 1;
@@ -127,8 +143,11 @@ impl Particle {
     }
 }
 
-fn get_max_heights(settled_particles: &[Particle]) -> HashMap<u32, u32> {
-    let mut heights: HashMap<u32, u32> = HashMap::new();
+fn get_max_heights(
+    peaks: Option<HashMap<u32, u32>>,
+    settled_particles: &[Particle],
+) -> HashMap<u32, u32> {
+    let mut heights: HashMap<u32, u32> = peaks.unwrap_or_default();
     (0..CONFIG.width).for_each(|x| {
         let max = settled_particles
             .iter()
@@ -136,7 +155,9 @@ fn get_max_heights(settled_particles: &[Particle]) -> HashMap<u32, u32> {
             .map(|p| p.y)
             .min()
             .unwrap_or(CONFIG.height);
-        heights.insert(x, max);
+
+        let cur_height = *heights.get(&x).unwrap_or(&CONFIG.height);
+        heights.insert(x, max.min(cur_height));
     });
 
     heights

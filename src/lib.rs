@@ -47,7 +47,7 @@ impl App {
             let upper_limit_y = (self.mouse_y + 10.0).min(CONFIG.height as f64);
 
             let mut rng = rand::thread_rng();
-            (0..20).for_each(|_| {
+            (0..CONFIG.particle_rate).for_each(|_| {
                 let x = rng.gen_range(lower_limit_x..upper_limit_x);
                 let y = rng.gen_range(lower_limit_y..upper_limit_y);
                 self.particle_set.add_particle(x, y);
@@ -67,5 +67,9 @@ impl App {
     pub fn release_mouse(&mut self) {
         log::debug!("Releasing mouse");
         self.mouse_pressed = false;
+    }
+    pub fn report(&self) {
+        log::debug!("Particle count: {}", self.particle_set.particles.len());
+        log::debug!("Peaks count: {}", self.particle_set.peaks.len());
     }
 }
