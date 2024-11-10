@@ -69,7 +69,8 @@ pub struct Particle {
 
 impl Particle {
     pub fn new(x: f64, y: f64) -> Self {
-        let color = random_color();
+        // let color = random_color();
+        let color = [0.5, 0.5, 0.5, 1.0];
         let radius = 1.0;
         let vx: f64 = 0.0;
         let vy: f64 = 0.0;

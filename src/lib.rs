@@ -1,6 +1,10 @@
+use std::cmp::{max, min};
+
+use config::CONFIG;
 use opengl_graphics::GlGraphics;
 use particle::ParticleSet;
 use piston_window::*;
+use rand::Rng;
 
 pub mod config;
 mod particle;
@@ -37,11 +41,17 @@ impl App {
         });
 
         if self.mouse_pressed {
-            self.particle_set.add_particle(self.mouse_x, self.mouse_y);
-            self.particle_set
-                .add_particle(self.mouse_x + 1.0, self.mouse_y - 2.0);
-            self.particle_set
-                .add_particle(self.mouse_x - 2.0, self.mouse_y - 4.0);
+            let lower_limit_x = (self.mouse_x - 10.0).max(0.0);
+            let upper_limit_x = (self.mouse_x + 10.0).min(CONFIG.width as f64);
+            let lower_limit_y = (self.mouse_y - 10.0).max(0.0);
+            let upper_limit_y = (self.mouse_y + 10.0).min(CONFIG.height as f64);
+
+            let mut rng = rand::thread_rng();
+            (0..20).for_each(|_| {
+                let x = rng.gen_range(lower_limit_x..upper_limit_x);
+                let y = rng.gen_range(lower_limit_y..upper_limit_y);
+                self.particle_set.add_particle(x, y);
+            })
         }
         self.particle_set.update();
         // self.ballset.update_loop();
